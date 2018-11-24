@@ -22,3 +22,8 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 chess_db-*.tar
 
+/config/*.secret.exs
+
+/.elixir_ls/*
+
+.DS_Store

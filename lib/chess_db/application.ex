@@ -10,6 +10,8 @@ defmodule ChessDb.Application do
     children = [
       # Starts a worker by calling: ChessDb.Worker.start_link(arg)
       # {ChessDb.Worker, arg},
+
+      {ChessDb.Repo, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
