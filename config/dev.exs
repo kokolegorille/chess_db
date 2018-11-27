@@ -5,4 +5,4 @@ config :chess_db, ChessDb.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  pool_size: 10
+  pool_size: 30

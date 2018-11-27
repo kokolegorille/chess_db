@@ -8,12 +8,7 @@ defmodule ChessDb.Chess.Position do
   alias ChessDb.Chess.{Game, Move}
 
   schema "positions" do
-    field :move_number, :integer
-    field :pieces, {:array, :string}
-    field :turn, ChessDb.TurnEnum
-    field :allowed_castling, :string
-    field :en_passant_square, :string
-    field :half_move_clock, :integer
+    field :move_index, :integer
     field :fen, :string
     field :zobrist_hash, :binary
 
@@ -27,8 +22,8 @@ defmodule ChessDb.Chess.Position do
     timestamps()
   end
 
-  @optional_fields ~w(allowed_castling en_passant_square zobrist_hash)a
-  @required_fields ~w(game_id move_number pieces turn half_move_clock fen)a
+  @optional_fields ~w(zobrist_hash)a
+  @required_fields ~w(game_id move_index fen)a
 
   def changeset(position = %Position{}, attrs) do
     position

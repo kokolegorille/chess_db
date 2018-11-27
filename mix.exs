@@ -25,7 +25,12 @@ defmodule ChessDb.MixProject do
       {:ecto_sql, "~> 3.0"},
       {:postgrex, ">= 0.0.0"},
       {:jason, "~> 1.1"},
-      {:ecto_enum, "~> 1.1"}
+      {:ecto_enum, "~> 1.1"},
+      #
+      {:gen_stage, "~> 0.14.1"},
+      #
+      {:chess_parser, git: "https://github.com/kokolegorille/chess_parser.git"},
+      {:chessfold, git: "https://github.com/kokolegorille/chessfold"},
     ]
   end
 end

@@ -37,6 +37,22 @@ defmodule ChessDb.Chess do
     |> Repo.insert()
   end
 
+
+  def first_or_create_player(attrs \\ %{}) do
+    case create_player(attrs) do
+      {:ok, player} -> player
+      {:error, _changeset} -> get_player_by(attrs)
+    end
+
+    # # THIS CAN BE A RACE CONDITION!
+    # case get_player_by(attrs) do
+    #   nil ->
+    #     {:ok, player} = create_player(attrs)
+    #     player
+    #   player -> player
+    # end
+  end
+
   def update_player(%Player{} = player, attrs) do
     player
     |> Player.changeset(attrs)

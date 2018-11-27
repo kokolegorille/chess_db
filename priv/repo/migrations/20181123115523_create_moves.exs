@@ -5,13 +5,14 @@ defmodule ChessDb.Repo.Migrations.CreateMoves do
     create table(:moves) do
       add :previous_id, references(:positions, on_delete: :delete_all)
       add :next_id, references(:positions, on_delete: :delete_all)
+      add :game_id, references(:games, on_delete: :delete_all)
+      add :move_index, :integer, default: 0
 
-      add :from, :string
-      add :to, :string
-      add :castling, :boolean, default: false
-      add :taken, :boolean, default: false
+      add :san, :string
 
       timestamps()
     end
+
+    create unique_index(:moves, [:game_id, :move_index])
   end
 end
