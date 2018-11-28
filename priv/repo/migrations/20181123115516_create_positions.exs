@@ -7,11 +7,12 @@ defmodule ChessDb.Repo.Migrations.CreatePositions do
       add :move_index, :integer, default: 0
       #
       add :fen, :string
-      add :zobrist_hash, :text
+      add :zobrist_hash, :string
 
       timestamps()
     end
 
     create unique_index(:positions, [:game_id, :move_index])
+    create index(:positions, [:zobrist_hash])
   end
 end

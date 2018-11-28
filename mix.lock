@@ -1,5 +1,5 @@
 %{
-  "chess_parser": {:git, "https://github.com/kokolegorille/chess_parser.git", "df77d632069e228aec968f693571646099dbafc4", []},
+  "chess_parser": {:git, "https://github.com/kokolegorille/chess_parser.git", "bd0ff72855fd2b021e91ff7ddd88787eb508a036", []},
   "chessfold": {:git, "https://github.com/kokolegorille/chessfold", "8982d75fc22781af368229386567c59147928e4f", []},
   "connection": {:hex, :connection, "1.0.4", "a1cae72211f0eef17705aaededacac3eb30e6625b04a6117c1b2db6ace7d5976", [:mix], [], "hexpm"},
   "db_connection": {:hex, :db_connection, "2.0.2", "440c05518b0bdca0469dafaf45403597430448c1281def14ef9ccaa41833ea1e", [:mix], [{:connection, "~> 1.0.2", [hex: :connection, repo: "hexpm", optional: false]}], "hexpm"},
