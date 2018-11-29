@@ -9,6 +9,9 @@ defmodule ChessDb.Repo.Migrations.CreateGames do
 
       add :pgn, :text
       add :game_info, :map
+      add :event, :string
+      add :site, :string
+      add :round, :string
       add :result, :string
       add :year, :integer
 

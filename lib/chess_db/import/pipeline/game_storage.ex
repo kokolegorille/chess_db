@@ -30,16 +30,26 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     Logger.debug(fn -> "Store game #{inspect tree}" end)
 
     game_info = extract_game_info(tags)
-    pgn = tree_to_pgn(tree)
 
-    case persist_game(game_info, pgn) do
+    game_params = %{
+      white_id: maybe_player_id_by_name(game_info["White"]),
+      black_id: maybe_player_id_by_name(game_info["Black"]),
+      game_info: game_info,
+      pgn: tree_to_pgn(tree),
+      event: game_info["Event"],
+      site: game_info["Site"],
+      round: game_info["Round"],
+      year: maybe_year(game_info["Date"]),
+      result: maybe_result(elems)
+    }
+
+    case persist_game(game_params) do
       {:ok, game} ->
         process_positions_and_moves(game, elems)
         game
       {:error, changeset} ->
         # Mostly because the game is a duplicate!
         Logger.debug(fn -> "skipping game #{inspect changeset.errors}" end)
-
         :error
     end
   end
@@ -62,15 +72,9 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     end
   end
 
-  defp persist_game(game_info, pgn) do
+  defp persist_game(game_params) do
     Logger.debug(fn -> "Persisting game..." end)
-
-    Chess.create_game(%{
-      white_id: maybe_player_id_by_name(game_info["White"]),
-      black_id: maybe_player_id_by_name(game_info["Black"]),
-      game_info: game_info,
-      pgn: pgn
-    })
+    Chess.create_game(game_params)
   end
 
   defp persist_positions(game_id, positions) do
@@ -124,10 +128,10 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
   end
 
   defp tree_to_pgn({:tree, tags, elems}) do
-    header = tags |> Enum.map_join(" ", fn {:tag, _, tag} -> to_string(tag) end)
+    header = tags |> Enum.map_join("\n", fn {:tag, _, tag} -> to_string(tag) end)
     body = elems |> Enum.map_join(" ", fn {_, _, elem} -> to_string(elem) end)
 
-    header <> " " <> body
+    header <> "\n" <> body
   end
 
   defp extract_game_info(tags) do
@@ -180,7 +184,17 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   defp maybe_player_id_by_name(name) when is_nil(name), do: nil
   defp maybe_player_id_by_name(name) do
-    user = Chess.first_or_create_player %{name: name}
+    last_and_first = name
+    |> String.split(",")
+
+    last = Enum.at(last_and_first, 0)
+    first = Enum.at(last_and_first, 1)
+    first = case first do
+      nil -> nil
+      first -> String.trim_leading(first, " ")
+    end
+
+    user = Chess.first_or_create_player %{last_name: last, first_name: first}
     user.id
   end
 
@@ -188,4 +202,30 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     Chessfold.string_to_position string
   end
+
+  defp maybe_year(date_string) when is_binary(date_string) do
+    case Regex.named_captures(~r/(?<date>\d{4})/, date_string) do
+      %{"date" => date} -> String.to_integer(date)
+      _ -> nil
+    end
+  end
+  defp maybe_year(_date_string), do: nil
+
+  defp maybe_result(elems) do
+    elem =
+      elems
+      |> Enum.filter(fn e ->
+        case e do
+          {:result, _, _} -> true
+          _ -> false
+        end
+      end)
+      |> List.first
+
+    case elem do
+      {:result, _, result} -> to_string(result)
+      _ -> nil
+    end
+  end
+
 end

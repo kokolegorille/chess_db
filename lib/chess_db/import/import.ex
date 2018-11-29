@@ -19,7 +19,11 @@ defmodule ChessDb.Import do
   defp lazy_load_pgn(file) do
     enqueued = file
     |> File.stream!()
-    |> Stream.chunk_by(fn line -> String.starts_with?(line, "[") end)
+    |> Stream.chunk_by(fn line ->
+      line
+      |> remove_bom_char()
+      |> String.starts_with?("[")
+    end)
     |> Stream.chunk_every(2)
     |> Stream.map(&List.flatten/1)
     |> Stream.map(&Enum.join/1)
@@ -37,6 +41,8 @@ defmodule ChessDb.Import do
   end
 
   defp enqueue_pgn(pgn) do
+    Logger.debug fn -> "Enqueue #{inspect pgn}" end
+
     case ChessParser.load_string(pgn) do
       {:ok, trees} ->
         games = trees
@@ -45,5 +51,9 @@ defmodule ChessDb.Import do
       {:error, _reason} ->
         {:error, 0}
     end
+  end
+
+  defp remove_bom_char(string) do
+    String.trim(string, "\uFEFF")
   end
 end
