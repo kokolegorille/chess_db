@@ -7,7 +7,7 @@ defmodule ChessDb.Import.Supervisors.ImportPipelineSupervisor do
   }
 
   @starter_name Starter
-  @nbr_workers 15
+  @default_nbr_workers 15
 
   def start_link(_) do
     Supervisor.start_link(__MODULE__, [], name: __MODULE__)
@@ -19,7 +19,7 @@ defmodule ChessDb.Import.Supervisors.ImportPipelineSupervisor do
     ]
 
     # Create a number of consumer, all connected to the same producer
-    game_storage_specs = 0..@nbr_workers |> Enum.map(fn i ->
+    game_storage_specs = (0..nbr_workers()) |> Enum.map(fn i ->
       name = :"store_#{i}"
       Supervisor.child_spec({GameStorage, [name, game_storage_subscription]}, id: name)
     end)
@@ -30,5 +30,11 @@ defmodule ChessDb.Import.Supervisors.ImportPipelineSupervisor do
       children,
       strategy: :rest_for_one
     )
+  end
+
+  # Private
+
+  defp nbr_workers do
+    Application.get_env(:chess_db, :import)[:nbr_workers] || @default_nbr_workers
   end
 end

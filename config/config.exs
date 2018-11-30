@@ -31,4 +31,6 @@ config :chess_db,
 # here (which is why it is important to import them last).
 #
 
+config :chess_db, :import, nbr_workers: 15
+
 import_config "#{Mix.env()}.exs"

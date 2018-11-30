@@ -6,7 +6,7 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
   use GenStage
   require Logger
 
-  alias ChessDb.{Chess, Repo}
+  alias ChessDb.{Chess, Repo, Zobrist}
 
   @dummy_state []
 
@@ -87,12 +87,15 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
           NaiveDateTime.utc_now
           |> NaiveDateTime.truncate(:second)
 
+        fen = Chessfold.position_to_string(position)
+
         %{
           game_id: game_id,
           move_index: index,
-          fen: Chessfold.position_to_string(position),
+          fen: fen,
           inserted_at: now,
           updated_at: now,
+          zobrist_hash: Zobrist.fen_to_zobrist_hash(fen)
         }
       end)
 

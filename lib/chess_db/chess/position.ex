@@ -10,7 +10,7 @@ defmodule ChessDb.Chess.Position do
   schema "positions" do
     field :move_index, :integer
     field :fen, :string
-    field :zobrist_hash, :binary
+    field :zobrist_hash, :integer
 
     belongs_to :game, Game
     has_one :previous_move, Move, foreign_key: :previous_id
@@ -22,12 +22,11 @@ defmodule ChessDb.Chess.Position do
     timestamps()
   end
 
-  @optional_fields ~w(zobrist_hash)a
-  @required_fields ~w(game_id move_index fen)a
+  @required_fields ~w(game_id move_index fen zobrist_hash)a
 
   def changeset(position = %Position{}, attrs) do
     position
-    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> assoc_constraint(:game)
   end

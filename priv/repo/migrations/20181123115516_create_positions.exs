@@ -6,8 +6,8 @@ defmodule ChessDb.Repo.Migrations.CreatePositions do
       add :game_id, references(:games, on_delete: :delete_all)
       add :move_index, :integer, default: 0
       #
-      add :fen, :string
-      add :zobrist_hash, :string
+      add :fen, :string, null: false
+      add :zobrist_hash, :bigint, null: false
 
       timestamps()
     end

@@ -121,6 +121,11 @@ defmodule ChessDb.Chess do
     Repo.all(Position)
   end
 
+  def list_positions_by_zobrist_hash(zobrist_hash) do
+    from(p in Position, where: p.zobrist_hash == ^zobrist_hash)
+    |> Repo.all
+  end
+
   def list_game_positions(%Game{} = game) do
     Position
     |> game_positions_query(game)

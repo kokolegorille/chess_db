@@ -7,6 +7,7 @@ defmodule ChessDb.Application do
 
   alias ChessDb.Import.Workers.QueueWorker
   alias ChessDb.Import.Supervisors.ImportPipelineSupervisor
+  alias ChessDb.Zobrist.Supervisors.ZobristSupervisor
 
   def start(_type, _args) do
     # List all child processes to be supervised
@@ -16,7 +17,8 @@ defmodule ChessDb.Application do
 
       {ChessDb.Repo, []},
       {QueueWorker, []},
-      ImportPipelineSupervisor
+      ImportPipelineSupervisor,
+      ZobristSupervisor,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
