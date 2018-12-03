@@ -27,5 +27,6 @@ defmodule ChessDb.Chess.Move do
     |> assoc_constraint(:previous_position)
     |> assoc_constraint(:next_position)
     |> assoc_constraint(:game)
+    |> unique_constraint(:game_and_move_index_constraint, name: :game_and_move_index_index)
   end
 end

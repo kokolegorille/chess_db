@@ -13,6 +13,6 @@ defmodule ChessDb.Repo.Migrations.CreateMoves do
       timestamps()
     end
 
-    create unique_index(:moves, [:game_id, :move_index])
+    create unique_index(:moves, [:game_id, :move_index], name: :game_and_move_index_index)
   end
 end

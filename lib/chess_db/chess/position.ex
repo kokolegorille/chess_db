@@ -29,5 +29,6 @@ defmodule ChessDb.Chess.Position do
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> assoc_constraint(:game)
+    |> unique_constraint(:game_and_move_constraint, name: :game_and_move_index)
   end
 end

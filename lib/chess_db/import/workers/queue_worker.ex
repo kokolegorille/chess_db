@@ -56,11 +56,10 @@ defmodule ChessDb.Import.Workers.QueueWorker do
     :ok
   end
 
-  # # Heavy load!
   # @timeout 20_000
 
   # # ======================================================
-  # # USE ERLANG QUEUE
+  # # USE ERLANG QUEUE => BOTTLENECK!
   # # ======================================================
 
   # def start_link(_args) do
@@ -95,9 +94,9 @@ defmodule ChessDb.Import.Workers.QueueWorker do
   #   {:noreply, new_queue}
   # end
 
-  # ======================================================
-  # The process approach => BOTTLENECK!
-  # ======================================================
+  # # ======================================================
+  # # The process approach => BOTTLENECK!
+  # # ======================================================
 
   # def start_link(_args) do
   #   GenServer.start_link(__MODULE__, [], name: __MODULE__)

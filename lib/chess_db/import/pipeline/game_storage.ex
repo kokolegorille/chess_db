@@ -5,6 +5,12 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   use GenStage
   require Logger
+  import ChessDb.Common, only: [
+    extract_moves: 1,
+    play_moves: 1,
+    tree_to_pgn: 1,
+    extract_game_info: 1
+  ]
 
   alias ChessDb.{Chess, Repo, Zobrist}
 
@@ -56,12 +62,11 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   defp process_positions_and_moves(game, elems) do
     moves = extract_moves(elems)
-    positions = extract_positions(moves)
+    positions = play_moves(moves)
 
     if length(moves) == length(positions) - 1 do
       {_number, inserted} = persist_positions(game.id, positions)
       persist_moves(game.id, moves, inserted)
-
       :ok
     else
       # This happens when the moves cannot be linked
@@ -130,61 +135,6 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     Repo.insert_all(Chess.Move, entries)
   end
 
-  defp tree_to_pgn({:tree, tags, elems}) do
-    header = tags |> Enum.map_join("\n", fn {:tag, _, tag} -> to_string(tag) end)
-    body = elems |> Enum.map_join(" ", fn {_, _, elem} -> to_string(elem) end)
-
-    header <> "\n" <> body
-  end
-
-  defp extract_game_info(tags) do
-    tags
-    |> Enum.reduce(%{}, fn {:tag, _, key_val}, acc ->
-      %{"key" => key, "value" => value} = sanitize(key_val)
-      Map.put(acc, key, value)
-    end)
-  end
-
-  def extract_moves(elems) do
-    elems
-    |> Enum.filter(fn e ->
-      case e do
-        {:san, _, _} -> true
-        _ -> false
-      end
-    end)
-    |> Enum.map(fn {:san, _, charlist_move} ->
-      charlist_move |> to_string
-    end)
-  end
-
-  defp extract_positions(moves) do
-    Logger.debug(fn -> "Processing moves #{inspect moves}" end)
-
-    moves
-    |> Enum.reduce_while([initial_position()], fn m, acc ->
-      case Chessfold.play(List.first(acc), m) do
-        {:ok, new_position} ->
-          {:cont, [new_position | acc]}
-        {:error, _reason} ->
-          {:halt, acc}
-      end
-    end)
-    |> Enum.reverse
-  end
-
-  defp sanitize(key_val) do
-    key_val
-    |> to_string
-    |> String.trim_leading("[")
-    |> String.trim_trailing("]")
-    |> extract_key_val()
-  end
-
-  defp extract_key_val(string) do
-    Regex.named_captures(~r/(?<key>.*)\s\"(?<value>.*)\"/, string)
-  end
-
   defp maybe_player_id_by_name(name) when is_nil(name), do: nil
   defp maybe_player_id_by_name(name) do
     last_and_first = name
@@ -199,11 +149,6 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
     user = Chess.first_or_create_player %{last_name: last, first_name: first}
     user.id
-  end
-
-  defp initial_position do
-    string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    Chessfold.string_to_position string
   end
 
   defp maybe_year(date_string) when is_binary(date_string) do
@@ -230,5 +175,4 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
       _ -> nil
     end
   end
-
 end

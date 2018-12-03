@@ -12,7 +12,7 @@ defmodule ChessDb.Repo.Migrations.CreatePositions do
       timestamps()
     end
 
-    create unique_index(:positions, [:game_id, :move_index])
+    create unique_index(:positions, [:game_id, :move_index], name: :game_and_move_index)
     create index(:positions, [:zobrist_hash])
   end
 end
