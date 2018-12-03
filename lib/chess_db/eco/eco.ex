@@ -150,7 +150,18 @@ defmodule ChessDb.Eco do
   # =================================================================
 
   def list_categories do
-    Repo.all(Category)
+    from(c in Category, order_by: [:volume, :code])
+    |> Repo.all()
+  end
+
+  def list_category_sub_categories(%Category{} = category) do
+    SubCategory
+    |> category_sub_categories_query(category)
+    |> Repo.all
+  end
+
+  defp category_sub_categories_query(query, %Category{id: category_id}) do
+    from(sc in query, where: sc.category_id == ^category_id)
   end
 
   def get_category(id) do

@@ -90,3 +90,10 @@ n consumers do the work.
 -> persists moves, w/ insert_all, and set move's relations w/ positions
 
 
+LOADING DATA
+==================
+
+From the console
+
+ChessDb.Eco.load_eco 
+ChessDb.Import.load_pgn "./test/fixtures/ivanchuk.pgn"

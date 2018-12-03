@@ -37,7 +37,6 @@ defmodule ChessDb.Chess do
     |> Repo.insert()
   end
 
-
   def first_or_create_player(attrs \\ %{}) do
     case create_player(attrs) do
       {:ok, player} -> player
