@@ -90,7 +90,7 @@ defmodule ChessDb.Chess do
   end
 
   def list_player_games(%Player{} = player) do
-    Game
+    from(g in Game, order_by: [g.year])
     |> player_games_query(player)
     |> Repo.all
   end
