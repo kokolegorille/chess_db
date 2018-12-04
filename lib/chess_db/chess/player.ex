@@ -8,6 +8,7 @@ defmodule ChessDb.Chess.Player do
   alias ChessDb.Chess.Game
 
   schema "players" do
+    field :full_name, :string
     field :last_name, :string
     field :first_name, :string
     has_many :black_games, Game, foreign_key: :black_id
@@ -17,12 +18,12 @@ defmodule ChessDb.Chess.Player do
   end
 
   @optional_fields ~w(first_name)a
-  @required_fields ~w(last_name)a
+  @required_fields ~w(full_name last_name)a
 
-  def changeset(player = %Player{}, attrs) do
+  def changeset(%Player{} = player, attrs) do
     player
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    |> unique_constraint(:last_and_first_constraint, name: :last_and_first_index)
+    |> unique_constraint(:full_name)
   end
 end

@@ -147,7 +147,11 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
       first -> String.trim_leading(first, " ")
     end
 
-    user = Chess.first_or_create_player %{last_name: last, first_name: first}
+    user = if is_nil(first) do
+      Chess.first_or_create_player %{full_name: name, last_name: last}
+    else
+      Chess.first_or_create_player %{full_name: name, last_name: last, first_name: first}
+    end
     user.id
   end
 
