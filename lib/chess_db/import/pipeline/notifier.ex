@@ -24,7 +24,6 @@ defmodule ChessDb.Import.Pipeline.Notifier do
 
   # Private
 
-  defp notify(task) do
-    Logger.debug(fn -> "#{inspect self()}: Notification for #{inspect task}" end)
-  end
+  defp notify(:error), do: Logger.debug(fn -> "#{inspect self()}: Error Notification" end)
+  defp notify(task), do: Logger.debug(fn -> "#{inspect self()}: Notification for #{inspect task}" end)
 end

@@ -64,6 +64,8 @@ defmodule ChessDb.Zobrist do
     |> full_zobrist_hash()
   end
 
+  def fen_to_zobrist_hash(_fen), do: 0
+
   def fen_to_position(fen) when is_binary(fen) do
 
     [position_string, turn, castling, en_passant_square|_rest] = String.split(fen, " ")

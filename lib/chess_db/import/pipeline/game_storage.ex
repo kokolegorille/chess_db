@@ -51,8 +51,10 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
     case persist_game(game_params) do
       {:ok, game} ->
-        process_positions_and_moves(game, elems)
-        game
+        case process_positions_and_moves(game, elems) do
+          :ok -> game
+          :error -> :error
+        end
       {:error, changeset} ->
         # Mostly because the game is a duplicate!
         Logger.debug(fn -> "skipping game #{inspect changeset.errors}" end)
@@ -72,8 +74,9 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
       # This happens when the moves cannot be linked
       # to their respective previous and next position
       Logger.debug(fn ->
-        "OOOPS wrong move numbers for game : #{inspect game.game_info}"
+        "OOOPS wrong move numbers #{length(moves)} - #{length(positions) - 1} for game : #{inspect game.game_info}"
       end)
+      :error
     end
   end
 

@@ -3,6 +3,8 @@ defmodule ChessDb.Common do
   Common tools
   """
 
+  require Logger
+
   def extract_moves(elems) do
     elems
     |> Enum.filter(fn e ->
@@ -12,17 +14,19 @@ defmodule ChessDb.Common do
       end
     end)
     |> Enum.map(fn {:san, _, charlist_move} ->
-      charlist_move |> to_string
+      charlist_move |> to_string() |> remove_move_marks()
     end)
   end
 
   def play_moves(moves, position \\ initial_position()) do
     moves
     |> Enum.reduce_while([position], fn move, acc ->
-      case Chessfold.play(List.first(acc), move) do
+      last_position = List.first(acc)
+      case Chessfold.play(last_position, move) do
         {:ok, new_position} ->
           {:cont, [new_position | acc]}
         {:error, _reason} ->
+          Logger.debug fn -> "#{inspect last_position} for #{move}" end
           {:halt, acc}
       end
     end)
@@ -62,4 +66,8 @@ defmodule ChessDb.Common do
   defp extract_key_val(string) do
     Regex.named_captures(~r/(?<key>.*)\s\"(?<value>.*)\"/, string)
   end
+
+  # Remove all marks for check, mate, etc. at the end of a move
+  # Beware not to remove - in O-O!
+  defp remove_move_marks(move), do: String.replace(move, ~r/[\#+-]*$/, "")
 end
