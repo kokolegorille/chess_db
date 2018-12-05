@@ -1,6 +1,6 @@
 defmodule ChessDb.Import.Pipeline.GameStorage do
   @moduledoc """
-  The GameStorage Consumer
+  The GameStorage Producer Consumer
   """
 
   use GenStage
@@ -22,12 +22,12 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   def init(subscription_options) do
     Logger.debug(fn -> "#{inspect(self())}: GameStorage started." end)
-    {:consumer, @dummy_state, subscription_options}
+    {:producer_consumer, @dummy_state, subscription_options}
   end
 
   def handle_events(tasks, _from, _state) do
-    Enum.each(tasks, &store_game(&1))
-    {:noreply, [], @dummy_state}
+    stored = Enum.map(tasks, &store_game(&1))
+    {:noreply, stored, @dummy_state}
   end
 
   # PRIVATE

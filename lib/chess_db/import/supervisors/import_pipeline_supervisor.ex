@@ -3,7 +3,8 @@ defmodule ChessDb.Import.Supervisors.ImportPipelineSupervisor do
 
   alias ChessDb.Import.Pipeline.{
     Starter,
-    GameStorage
+    GameStorage,
+    Notifier
   }
 
   @starter_name Starter
@@ -24,7 +25,19 @@ defmodule ChessDb.Import.Supervisors.ImportPipelineSupervisor do
       Supervisor.child_spec({GameStorage, [name, game_storage_subscription]}, id: name)
     end)
 
-    children = [worker(Starter, [], restart: :permanent)] ++ game_storage_specs
+    notifier_subs = (0..nbr_workers()) |> Enum.map(fn i ->
+      {:"store_#{i}", min_demand: 1, max_demand: 10}
+    end)
+
+    notifier_subscription = [
+      subscribe_to: notifier_subs
+    ]
+
+    notifier_spec = Supervisor.child_spec({Notifier, [:notifier_step, notifier_subscription]}, id: :notifier_step)
+
+    children = [worker(Starter, [], restart: :permanent)] ++
+      game_storage_specs ++
+      [notifier_spec]
 
     Supervisor.init(
       children,
