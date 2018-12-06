@@ -31,6 +31,7 @@ defmodule ChessDb.MixProject do
       #
       {:chess_parser, git: "https://github.com/kokolegorille/chess_parser.git"},
       {:chessfold, git: "https://github.com/kokolegorille/chessfold"},
+      {:iconv, "~> 1.0"},
     ]
   end
 end

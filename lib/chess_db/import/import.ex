@@ -18,25 +18,13 @@ defmodule ChessDb.Import do
   # Create a stream of pgn strings from a (big) file
   defp lazy_load_pgn(file) do
     enqueued = file
-    |> File.stream!()
-    |> Stream.chunk_by(fn line ->
-      line
-      |> remove_bom_char()
-      |> String.starts_with?("[")
-    end)
+    |> File.stream!([:trim_bom])
+    |> Stream.chunk_by( &String.starts_with?(&1, "["))
     |> Stream.chunk_every(2)
     |> Stream.map(&List.flatten/1)
     |> Stream.map(&Enum.join/1)
-    |> Stream.filter(fn pgn_string ->
-      if String.valid?(pgn_string) do
-        true
-      else
-        Logger.debug fn -> "ARRGGH, string is invalid #{inspect pgn_string}" end
-        false
-      end
-    end)
+    |> Stream.map(& force_utf8(&1))
     |> Enum.map(&enqueue_pgn(&1))
-
     {:ok, length(enqueued)}
   end
 
@@ -53,7 +41,14 @@ defmodule ChessDb.Import do
     end
   end
 
-  defp remove_bom_char(string) do
-    String.trim(string, "\uFEFF")
+  # https://elixirforum.com/t/how-to-replace-accented-letters-with-ascii-letters/539/4
+  defp force_utf8(string) do
+    if String.valid?(string) do
+      string
+    else
+      new_string = :iconv.convert "utf-8", "ascii//translit", string
+      Logger.debug fn -> "Converting #{inspect string} to #{new_string}" end
+      new_string
+    end
   end
 end
