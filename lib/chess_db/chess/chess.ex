@@ -6,7 +6,7 @@ defmodule ChessDb.Chess do
   require Logger
 
   alias ChessDb.Repo
-  alias ChessDb.Chess.{Player, Game, Position, Move}
+  alias ChessDb.Chess.{Player, Game, Position}
 
   # =================================================================
   # PLAYERS
@@ -172,46 +172,6 @@ defmodule ChessDb.Chess do
 
   def change_position(%Position{} = position) do
     Position.changeset(position, %{})
-  end
-
-  # =================================================================
-  # MOVES
-  # =================================================================
-
-  def list_moves do
-    Repo.all(Move)
-  end
-
-  def list_game_moves(%Game{} = game) do
-    Move
-    |> game_moves_query(game)
-    |> Repo.all
-  end
-
-  def get_move(id) do
-    Repo.get(Move, id)
-  end
-
-  def get_move!(id) do
-    Repo.get!(Move, id)
-  end
-
-  def create_move(attrs \\ %{}) do
-    %Move{}
-    |> Move.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  def update_move(%Move{} = move, attrs) do
-    move
-    |> Move.changeset(attrs)
-    |> Repo.update()
-  end
-
-  def delete_move(%Move{} = move), do: Repo.delete(move)
-
-  def change_move(%Move{} = move) do
-    Move.changeset(move, %{})
   end
 
   # =================================================================

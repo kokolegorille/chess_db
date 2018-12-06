@@ -5,28 +5,25 @@ defmodule ChessDb.Chess.Position do
   import Ecto.Changeset
 
   alias __MODULE__
-  alias ChessDb.Chess.{Game, Move}
+  alias ChessDb.Chess.Game
 
   schema "positions" do
     field :move_index, :integer
     field :fen, :string
     field :zobrist_hash, :integer
+    field :move, :string
 
     belongs_to :game, Game
-    has_one :previous_move, Move, foreign_key: :previous_id
-    has_one :next_move, Move, foreign_key: :next_id
-
-    has_one :previous_position, through: [:previous_move, :previous_position]
-    has_one :next_position, through: [:next_move, :next_position]
 
     timestamps()
   end
 
+  @optional_fields ~w(move)a
   @required_fields ~w(game_id move_index fen zobrist_hash)a
 
   def changeset(position = %Position{}, attrs) do
     position
-    |> cast(attrs, @required_fields)
+    |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
     |> assoc_constraint(:game)
     |> unique_constraint(:game_and_move_constraint, name: :game_and_move_index)

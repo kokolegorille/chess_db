@@ -62,13 +62,19 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     end
   end
 
+  defp persist_game(game_params) do
+    Logger.debug(fn -> "Persisting game..." end)
+    Chess.create_game(game_params)
+  end
+
   defp process_positions_and_moves(game, elems) do
     moves = extract_moves(elems)
     positions = play_moves(moves)
 
     if length(moves) == length(positions) - 1 do
-      {_number, inserted} = persist_positions(game.id, positions)
-      persist_moves(game.id, moves, inserted)
+      # {_number, inserted} = persist_positions(game.id, positions)
+      # persist_moves(game.id, moves, inserted)
+      persist_positions(game.id, positions, moves)
       :ok
     else
       # This happens when the moves cannot be linked
@@ -80,62 +86,32 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
     end
   end
 
-  defp persist_game(game_params) do
-    Logger.debug(fn -> "Persisting game..." end)
-    Chess.create_game(game_params)
-  end
-
-  defp persist_positions(game_id, positions) do
+  defp persist_positions(game_id, positions, moves) do
     Logger.debug(fn -> "Persisting positions..." end)
 
     entries = positions
-      |> Enum.with_index()
-      |> Enum.map(fn {position, index} ->
-        now =
-          NaiveDateTime.utc_now
-          |> NaiveDateTime.truncate(:second)
-
-        fen = Chessfold.position_to_string(position)
-
-        %{
-          game_id: game_id,
-          move_index: index,
-          fen: fen,
-          inserted_at: now,
-          updated_at: now,
-          zobrist_hash: Zobrist.fen_to_zobrist_hash(fen)
-        }
-      end)
-
-      Repo.insert_all(Chess.Position, entries, returning: [:id])
-  end
-
-  defp persist_moves(game_id, moves, inserted) do
-    Logger.debug(fn -> "Persisting moves..." end)
-
-    entries = moves
     |> Enum.with_index()
-    |> Enum.map(fn {move, index} ->
+    |> Enum.map(fn {position, index} ->
       now =
         NaiveDateTime.utc_now
         |> NaiveDateTime.truncate(:second)
 
-      # Set associations
-      %Chess.Position{id: previous_id} = Enum.at(inserted, index)
-      %Chess.Position{id: next_id} = Enum.at(inserted, index + 1)
+      fen = Chessfold.position_to_string(position)
 
-      %{
+      pos = %{
         game_id: game_id,
-        previous_id: previous_id,
-        next_id: next_id,
         move_index: index,
-        san: move,
+        fen: fen,
         inserted_at: now,
         updated_at: now,
+        zobrist_hash: Zobrist.fen_to_zobrist_hash(fen)
       }
+      move = Enum.at(moves, index)
+      if move, do: Map.put(pos, :move, move), else: pos
     end)
 
-    Repo.insert_all(Chess.Move, entries)
+    # Repo.insert_all(Chess.Position, entries, returning: [:id])
+    Repo.insert_all(Chess.Position, entries)
   end
 
   defp maybe_player_id_by_name(name) when is_nil(name), do: nil

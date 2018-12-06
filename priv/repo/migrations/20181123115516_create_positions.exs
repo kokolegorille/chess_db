@@ -8,6 +8,7 @@ defmodule ChessDb.Repo.Migrations.CreatePositions do
       #
       add :fen, :string, null: false
       add :zobrist_hash, :bigint, null: false
+      add :move, :string
 
       timestamps()
     end
