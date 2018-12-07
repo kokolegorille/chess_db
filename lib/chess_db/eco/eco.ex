@@ -257,7 +257,11 @@ defmodule ChessDb.Eco do
     |> order_by([:category_id, :position])
   end
 
-  def list_sub_categories(args \\ []), do: args |> list_sub_categories_query() |> Repo.all()
+  def list_sub_categories(args \\ []) do
+    args
+    |> list_sub_categories_query()
+    |> Repo.all()
+  end
 
   def get_sub_category(id) do
     Repo.get(SubCategory, id)
