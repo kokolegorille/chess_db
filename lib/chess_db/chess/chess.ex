@@ -111,11 +111,17 @@ defmodule ChessDb.Chess do
           on: [id: q.black_id],
           where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
       {:zobrist_hash, zobrist_hash}, query ->
+        zobrist_hash = if is_nil(zobrist_hash) || zobrist_hash == "" do
+          0
+        else
+          String.to_integer(zobrist_hash)
+        end
         from q in query,
           join: p in Position,
           on: [game_id: q.id],
-          where: p.zobrist_hash == ^String.to_integer(zobrist_hash),
+          where: p.zobrist_hash == ^zobrist_hash,
           distinct: true
+
       arg, query ->
         Logger.info("args is not matched in query #{inspect arg}")
         query
