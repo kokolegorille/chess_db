@@ -53,6 +53,17 @@ defmodule ChessDb.Common do
     end)
   end
 
+  def sanitize_zobrist(hash) do
+    case hash do
+      nil -> 0
+      "" -> 0
+      hash when is_binary(hash) ->
+        String.to_integer(hash)
+      hash when is_integer(hash) -> hash
+      _ -> 0
+    end
+  end
+
   # Private
 
   defp sanitize(key_val) do

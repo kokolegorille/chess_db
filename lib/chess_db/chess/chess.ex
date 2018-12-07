@@ -3,6 +3,8 @@ defmodule ChessDb.Chess do
   The Chess context
   """
   import Ecto.Query, warn: false
+  import ChessDb.Common, only: [sanitize_zobrist: 1]
+
   require Logger
 
   alias ChessDb.Repo
@@ -111,15 +113,10 @@ defmodule ChessDb.Chess do
           on: [id: q.black_id],
           where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
       {:zobrist_hash, zobrist_hash}, query ->
-        zobrist_hash = if is_nil(zobrist_hash) || zobrist_hash == "" do
-          0
-        else
-          String.to_integer(zobrist_hash)
-        end
         from q in query,
           join: p in Position,
           on: [game_id: q.id],
-          where: p.zobrist_hash == ^zobrist_hash,
+          where: p.zobrist_hash == ^sanitize_zobrist(zobrist_hash),
           distinct: true
 
       arg, query ->

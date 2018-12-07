@@ -9,7 +9,11 @@ defmodule ChessDb.Eco do
   @external_resource Path.join(:code.priv_dir(:chess_db), "scid.eco")
 
   import Ecto.Query, warn: false
-  import ChessDb.Common, only: [extract_moves: 1, play_moves: 1]
+  import ChessDb.Common, only: [
+    extract_moves: 1,
+    play_moves: 1,
+    sanitize_zobrist: 1
+  ]
 
   require Logger
 
@@ -242,7 +246,7 @@ defmodule ChessDb.Eco do
           where: ilike(q.description, ^"%#{description}%")
       {:zobrist_hash, zobrist_hash}, query ->
         from q in query,
-          where: q.zobrist_hash == ^String.to_integer(zobrist_hash)
+          where: q.zobrist_hash == ^sanitize_zobrist(zobrist_hash)
       arg, query ->
         Logger.info("args is not matched in query #{inspect arg}")
         query
