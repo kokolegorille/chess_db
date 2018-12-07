@@ -10,6 +10,9 @@ defmodule ChessDb.Chess do
   alias ChessDb.Repo
   alias ChessDb.Chess.{Player, Game, Position}
 
+  # Relay connection from query needs access to repo
+  def process_repo(query), do: query |> Repo.all
+
   # =================================================================
   # PLAYERS
   # =================================================================

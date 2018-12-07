@@ -20,6 +20,9 @@ defmodule ChessDb.Eco do
   alias ChessDb.Eco.{Category, SubCategory}
   alias ChessDb.{Repo, Zobrist, Common}
 
+  # Relay connection from query needs access to repo
+  def process_repo(query), do: query |> Repo.all
+
   # =================================================================
   # IMPORT ECO CODE
   # =================================================================
