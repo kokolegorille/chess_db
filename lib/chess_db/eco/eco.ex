@@ -107,9 +107,7 @@ defmodule ChessDb.Eco do
 
   defp do_process_code({[], _cat_code, _cat_id, _position, acc}), do: acc
   defp do_process_code({[%{code: code} = eco_code | tail], cat_code, cat_id, position, acc}) do
-    regex = ~r/(?<volume>[A-E])(?<category_code>[0-9]{2})(?<sub_category_code>[a-z0-9]?)/
-
-    case Regex.named_captures(regex, code) do
+    case Regex.named_captures(category_code_regex(), code) do
       %{"volume" => volume, "category_code" => category_code, "sub_category_code" => sub_category_code} ->
         now =
           NaiveDateTime.utc_now
@@ -145,23 +143,50 @@ defmodule ChessDb.Eco do
     end
   end
 
+  defp category_code_regex() do
+    ~r/(?<volume>[A-E])(?<category_code>[0-9]{0,2})(?<sub_category_code>[a-z0-9]?)/
+  end
+
   # =================================================================
   # CATEGORIES
   # =================================================================
 
-  def list_categories do
-    from(c in Category, order_by: [:volume, :code])
+  def list_categories_query(args) do
+    args
+    |> Enum.reduce(Category, fn
+      {:code, code}, query ->
+        case Regex.named_captures(category_code_regex(), code) do
+          %{"volume" => volume, "category_code" => category_code, "sub_category_code" => _sub_category_code} ->
+            case category_code do
+              "" ->
+                from q in query,
+                  where: q.volume == ^volume,
+                  order_by: [:volume, :code]
+              category_code ->
+                from q in query,
+                  where: q.volume == ^volume and ilike(q.code, ^"#{category_code}%"),
+                  order_by: [:volume, :code]
+            end
+          _ ->
+            Logger.debug(fn -> "Could not filter by code #{inspect code}" end)
+            query
+        end
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+  end
+
+  def list_categories(args \\ []), do: Repo.all(list_categories_query(args))
+
+  def list_category_sub_categories_query(%Category{id: category_id}, args) do
+    from(sc in list_sub_categories_query(args), where: sc.category_id == ^category_id)
+  end
+
+  def list_category_sub_categories(%Category{} = category, args \\ []) do
+    category
+    |> list_category_sub_categories_query(args)
     |> Repo.all()
-  end
-
-  def list_category_sub_categories(%Category{} = category) do
-    SubCategory
-    |> category_sub_categories_query(category)
-    |> Repo.all
-  end
-
-  defp category_sub_categories_query(query, %Category{id: category_id}) do
-    from(sc in query, where: sc.category_id == ^category_id)
   end
 
   def get_category(id) do
@@ -209,9 +234,23 @@ defmodule ChessDb.Eco do
   # SUB CATEGORIES
   # =================================================================
 
-  def list_sub_categories do
-    Repo.all(SubCategory)
+  def list_sub_categories_query(args) do
+    args
+    |> Enum.reduce(SubCategory, fn
+      {:description, description}, query ->
+        from q in query,
+          where: ilike(q.description, ^"%#{description}%")
+      {:zobrist_hash, zobrist_hash}, query ->
+        from q in query,
+          where: q.zobrist_hash == ^String.to_integer(zobrist_hash)
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+    |> order_by([:category_id, :position])
   end
+
+  def list_sub_categories(args \\ []), do: args |> list_sub_categories_query() |> Repo.all()
 
   def get_sub_category(id) do
     Repo.get(SubCategory, id)

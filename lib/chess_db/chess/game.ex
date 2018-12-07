@@ -5,7 +5,7 @@ defmodule ChessDb.Chess.Game do
   import Ecto.Changeset
 
   alias __MODULE__
-  alias ChessDb.Chess.{Player, Position, Move}
+  alias ChessDb.Chess.{Player, Position}
 
   schema "games" do
     field :pgn, :binary
@@ -20,7 +20,6 @@ defmodule ChessDb.Chess.Game do
     belongs_to :black_player, Player, foreign_key: :black_id
     belongs_to :white_player, Player, foreign_key: :white_id
     has_many :positions, Position
-    has_many :moves, Move
 
     timestamps()
   end

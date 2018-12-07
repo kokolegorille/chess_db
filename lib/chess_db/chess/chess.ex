@@ -12,19 +12,32 @@ defmodule ChessDb.Chess do
   # PLAYERS
   # =================================================================
 
-  def list_players(args \\ []), do: list_players_query(args) |> Repo.all()
+  def list_players(args \\ []), do: args |> list_players_query() |> Repo.all()
 
   def list_players_query(args) do
     args
     |> Enum.reduce(Player, fn
       {:order, order}, query ->
         query |> order_by({^order, :last_name})
-      {:matching, matching}, query ->
-        from q in query, where: ilike(q.last_name, ^"%#{matching}%") or ilike(q.first_name, ^"%#{matching}%")
+      {:name, name}, query ->
+        from q in query, where: ilike(q.last_name, ^"%#{name}%") or ilike(q.first_name, ^"%#{name}%")
       arg, query ->
         Logger.debug(fn -> "args is not matched in query #{inspect arg}" end)
         query
     end)
+  end
+
+  def list_player_games_query(%Player{id: player_id}, args) do
+    from(
+      g in list_games_query(args),
+      where: g.white_id == ^player_id or g.black_id == ^player_id
+    )
+  end
+
+  def list_player_games(%Player{} = player, args \\ []) do
+    player
+    |> list_player_games_query(args)
+    |> Repo.all
   end
 
   def get_player(id) do
@@ -72,10 +85,53 @@ defmodule ChessDb.Chess do
   # GAMES
   # =================================================================
 
-  def list_games do
-    from(g in Game, order_by: [g.year])
+  def list_games_query(args) do
+    args
+    |> Enum.reduce(Game, fn
+      {:order, order}, query ->
+        query |> order_by([{^order, :year}, :event, :round])
+      {:event, event}, query ->
+        from q in query, where: ilike(q.event, ^"%#{event}%")
+      {:site, site}, query ->
+        from q in query, where: ilike(q.site, ^"%#{site}%")
+      {:round, round}, query ->
+        from q in query, where: ilike(q.round, ^"%#{round}%")
+      {:result, result}, query ->
+        from q in query, where: q.result == ^result
+      {:year, year}, query ->
+        from q in query, where: q.year == ^year
+      {:white_player, name}, query ->
+        from q in query,
+          join: p in Player,
+          on: [id: q.white_id],
+          where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
+      {:black_player, name}, query ->
+        from q in query,
+          join: p in Player,
+          on: [id: q.black_id],
+          where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
+      {:zobrist_hash, zobrist_hash}, query ->
+        from q in query,
+          join: p in Position,
+          on: [game_id: q.id],
+          where: p.zobrist_hash == ^String.to_integer(zobrist_hash),
+          distinct: true
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+  end
+
+  def list_games(args \\ []) do
+    list_games_query(args)
     |> Repo.all()
     |> Repo.preload([:white_player, :black_player])
+  end
+
+  def list_games_by_zobrist_hash(zobrist_hash) when is_binary(zobrist_hash) do
+    zobrist_hash
+    |> String.to_integer()
+    |> list_games_by_zobrist_hash()
   end
 
   def list_games_by_zobrist_hash(zobrist_hash) do
@@ -89,9 +145,16 @@ defmodule ChessDb.Chess do
     |> Repo.preload([:white_player, :black_player])
   end
 
-  def list_player_games(%Player{} = player) do
-    from(g in Game, order_by: [g.year])
-    |> player_games_query(player)
+  def list_game_positions_query(%Game{id: game_id}, args) do
+    from(
+      p in list_positions_query(args),
+      where: p.game_id == ^game_id
+    )
+  end
+
+  def list_game_positions(%Game{} = game, args \\ []) do
+    game
+    |> list_game_positions_query(args)
     |> Repo.all
   end
 
@@ -133,18 +196,30 @@ defmodule ChessDb.Chess do
   # POSITIONS
   # =================================================================
 
-  def list_positions do
-    Repo.all(Position)
+  def list_positions_query(args) do
+    args
+    |> Enum.reduce(Position, fn
+      {:zobrist_hash, zobrist_hash}, query ->
+        from q in query, where: q.zobrist_hash == ^zobrist_hash
+      {:move, move}, query ->
+        from q in query, where: q.move == ^move
+      {:fen, fen}, query ->
+        from q in query, where: q.fen == ^fen
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+    |> order_by([:game_id, :move_index])
+  end
+
+  def list_positions(args \\ []) do
+    args
+    |> list_positions_query()
+    |> Repo.all()
   end
 
   def list_positions_by_zobrist_hash(zobrist_hash) do
     from(p in Position, where: p.zobrist_hash == ^zobrist_hash)
-    |> Repo.all
-  end
-
-  def list_game_positions(%Game{} = game) do
-    Position
-    |> game_positions_query(game)
     |> Repo.all
   end
 
@@ -178,15 +253,15 @@ defmodule ChessDb.Chess do
   # PRIVATE
   # =================================================================
 
-  defp player_games_query(query, %Player{id: player_id}) do
-    from(g in query, where: g.white_id == ^player_id or g.black_id == ^player_id)
-  end
+  # defp player_games_query(query, %Player{id: player_id}) do
+  #   from(g in query, where: g.white_id == ^player_id or g.black_id == ^player_id)
+  # end
 
-  defp game_positions_query(query, %Game{id: game_id}) do
-    from(p in query, where: p.game_id == ^game_id, order_by: [:move_index])
-  end
+  # defp game_positions_query(query, %Game{id: game_id}) do
+  #   from(p in query, where: p.game_id == ^game_id, order_by: [:move_index])
+  # end
 
-  defp game_moves_query(query, %Game{id: game_id}) do
-    from(m in query, where: m.game_id == ^game_id, order_by: [:move_index])
-  end
+  # defp game_moves_query(query, %Game{id: game_id}) do
+  #   from(m in query, where: m.game_id == ^game_id, order_by: [:move_index])
+  # end
 end

@@ -77,8 +77,7 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
       persist_positions(game.id, positions, moves)
       :ok
     else
-      # This happens when the moves cannot be linked
-      # to their respective previous and next position
+      # This happens when the numbers of moves and positions are not in sync
       Logger.debug(fn ->
         "OOOPS wrong move numbers #{length(moves)} - #{length(positions) - 1} for game : #{inspect game.game_info}"
       end)
