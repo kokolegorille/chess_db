@@ -141,23 +141,6 @@ defmodule ChessDb.Chess do
     |> Repo.preload([:white_player, :black_player])
   end
 
-  def list_games_by_zobrist_hash(zobrist_hash) when is_binary(zobrist_hash) do
-    zobrist_hash
-    |> String.to_integer()
-    |> list_games_by_zobrist_hash()
-  end
-
-  def list_games_by_zobrist_hash(zobrist_hash) do
-    from(
-      g in Game,
-      join: p in assoc(g, :positions),
-      where: p.zobrist_hash == ^zobrist_hash,
-      order_by: [g.year]
-    )
-    |> Repo.all()
-    |> Repo.preload([:white_player, :black_player])
-  end
-
   def list_game_positions_query(%Game{id: game_id}, args) do
     from(
       p in list_positions_query(args),
@@ -239,11 +222,6 @@ defmodule ChessDb.Chess do
     |> Repo.all()
   end
 
-  def list_positions_by_zobrist_hash(zobrist_hash) do
-    from(p in Position, where: p.zobrist_hash == ^zobrist_hash)
-    |> Repo.all
-  end
-
   def get_position(id) do
     Repo.get(Position, id)
   end
@@ -269,20 +247,4 @@ defmodule ChessDb.Chess do
   def change_position(%Position{} = position) do
     Position.changeset(position, %{})
   end
-
-  # =================================================================
-  # PRIVATE
-  # =================================================================
-
-  # defp player_games_query(query, %Player{id: player_id}) do
-  #   from(g in query, where: g.white_id == ^player_id or g.black_id == ^player_id)
-  # end
-
-  # defp game_positions_query(query, %Game{id: game_id}) do
-  #   from(p in query, where: p.game_id == ^game_id, order_by: [:move_index])
-  # end
-
-  # defp game_moves_query(query, %Game{id: game_id}) do
-  #   from(m in query, where: m.game_id == ^game_id, order_by: [:move_index])
-  # end
 end
