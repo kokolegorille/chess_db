@@ -23,7 +23,7 @@ defmodule ChessDb.Chess do
     args
     |> Enum.reduce(Player, fn
       {:order, order}, query ->
-        query |> order_by({^order, :last_name})
+        query |> order_by([{^order, :last_name}, {^order, :first_name}])
       {:name, name}, query ->
         from q in query, where: ilike(q.last_name, ^"%#{name}%") or ilike(q.first_name, ^"%#{name}%")
       arg, query ->
@@ -94,7 +94,18 @@ defmodule ChessDb.Chess do
     args
     |> Enum.reduce(Game, fn
       {:order, order}, query ->
-        query |> order_by([{^order, :year}, :event, :round])
+        order_by(query, [{^order, :year}, :event, :round])
+      {:filter, filter}, query ->
+        filter_game_with(query, filter)
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+  end
+
+  defp filter_game_with(query, filter) do
+    filter
+    |> Enum.reduce(query, fn
       {:event, event}, query ->
         from q in query, where: ilike(q.event, ^"%#{event}%")
       {:site, site}, query ->
@@ -121,10 +132,6 @@ defmodule ChessDb.Chess do
           on: [game_id: q.id],
           where: p.zobrist_hash == ^sanitize_zobrist(zobrist_hash),
           distinct: true
-
-      arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
-        query
     end)
   end
 
@@ -205,17 +212,25 @@ defmodule ChessDb.Chess do
   def list_positions_query(args) do
     args
     |> Enum.reduce(Position, fn
+      {:filter, filter}, query ->
+        filter_position_with(query, filter)
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
+    end)
+    |> order_by([:game_id, :move_index])
+  end
+
+  defp filter_position_with(query, filter) do
+    filter
+    |> Enum.reduce(query, fn
       {:zobrist_hash, zobrist_hash}, query ->
         from q in query, where: q.zobrist_hash == ^zobrist_hash
       {:move, move}, query ->
         from q in query, where: q.move == ^move
       {:fen, fen}, query ->
         from q in query, where: q.fen == ^fen
-      arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
-        query
     end)
-    |> order_by([:game_id, :move_index])
   end
 
   def list_positions(args \\ []) do
