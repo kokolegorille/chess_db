@@ -97,9 +97,16 @@ defmodule ChessDb.Chess do
         order_by(query, [{^order, :year}, :event, :round])
       {:filter, filter}, query ->
         filter_game_with(query, filter)
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
     end)
   end
 
+  # For graphQl queries with a game_filter input_object
+  #
+  # eg: ChessDb.Chess.list_games(%{filter: %{player: "hou", year: "2018"}})
+  #
   defp filter_game_with(query, filter) do
     filter
     |> Enum.reduce(query, fn
@@ -123,6 +130,12 @@ defmodule ChessDb.Chess do
           join: p in Player,
           on: [id: q.black_id],
           where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
+      {:player, name}, query ->
+        # For a player with withe or black
+        from q in query,
+          join: p in Player,
+          on: p.id == q.white_id or p.id == q.black_id,
+          where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
       {:zobrist_hash, zobrist_hash}, query ->
         from q in query,
           join: p in Position,
@@ -130,7 +143,7 @@ defmodule ChessDb.Chess do
           where: p.zobrist_hash == ^sanitize_zobrist(zobrist_hash),
           distinct: true
       arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
+        Logger.info("args is not matched in filter #{inspect arg}")
         query
     end)
   end
@@ -197,6 +210,9 @@ defmodule ChessDb.Chess do
     |> Enum.reduce(Position, fn
       {:filter, filter}, query ->
         filter_position_with(query, filter)
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
     end)
     |> order_by([:game_id, :move_index])
   end
@@ -211,7 +227,7 @@ defmodule ChessDb.Chess do
       {:fen, fen}, query ->
         from q in query, where: q.fen == ^fen
       arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
+        Logger.info("args is not matched in filter #{inspect arg}")
         query
     end)
   end
