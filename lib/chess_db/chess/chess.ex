@@ -97,9 +97,6 @@ defmodule ChessDb.Chess do
         order_by(query, [{^order, :year}, :event, :round])
       {:filter, filter}, query ->
         filter_game_with(query, filter)
-      arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
-        query
     end)
   end
 
@@ -132,6 +129,9 @@ defmodule ChessDb.Chess do
           on: [game_id: q.id],
           where: p.zobrist_hash == ^sanitize_zobrist(zobrist_hash),
           distinct: true
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
     end)
   end
 
@@ -197,9 +197,6 @@ defmodule ChessDb.Chess do
     |> Enum.reduce(Position, fn
       {:filter, filter}, query ->
         filter_position_with(query, filter)
-      arg, query ->
-        Logger.info("args is not matched in query #{inspect arg}")
-        query
     end)
     |> order_by([:game_id, :move_index])
   end
@@ -213,6 +210,9 @@ defmodule ChessDb.Chess do
         from q in query, where: q.move == ^move
       {:fen, fen}, query ->
         from q in query, where: q.fen == ^fen
+      arg, query ->
+        Logger.info("args is not matched in query #{inspect arg}")
+        query
     end)
   end
 
