@@ -250,6 +250,26 @@ defmodule ChessDb.Eco do
       {:zobrist_hash, zobrist_hash}, query ->
         from q in query,
           where: q.zobrist_hash == ^sanitize_zobrist(zobrist_hash)
+      {:code, code}, query ->
+        case Regex.named_captures(category_code_regex(), code) do
+          %{"volume" => volume, "category_code" => category_code, "sub_category_code" => sub_category_code} ->
+            query = from q in query,
+              join: c in Category,
+              on: c.id == q.category_id,
+              where: c.volume == ^volume and ilike(c.code, ^"#{category_code}%")
+
+            case sub_category_code do
+              "" ->
+                query
+              sub_category_code ->
+                from q in query,
+                where: q.code == ^sub_category_code
+            end
+
+          _ ->
+            Logger.debug(fn -> "Could not filter by code #{inspect code}" end)
+            query
+        end
       arg, query ->
         Logger.info("args is not matched in query #{inspect arg}")
         query
