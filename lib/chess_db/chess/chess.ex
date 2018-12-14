@@ -135,7 +135,8 @@ defmodule ChessDb.Chess do
         from q in query,
           join: p in Player,
           on: p.id == q.white_id or p.id == q.black_id,
-          where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
+          where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%"),
+          distinct: q.id
       {:zobrist_hash, zobrist_hash}, query ->
         from q in query,
           join: p in Position,
