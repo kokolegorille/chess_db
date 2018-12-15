@@ -15,7 +15,7 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
   alias ChessDb.{Chess, Repo, Zobrist}
 
   @dummy_state []
-
+  @date_regex ~r/(?<year>\d{4})[\.\/](?<month>\d{2})[\.\/](?<day>\d{2})/
   def start_link([name, subscription_options]) do
     GenStage.start_link(__MODULE__, subscription_options, name: name)
   end
@@ -46,7 +46,11 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
       site: game_info["Site"],
       round: game_info["Round"],
       year: maybe_year(game_info["Date"]),
-      result: maybe_result(elems)
+      month: maybe_month(game_info["Date"]),
+      day: maybe_day(game_info["Date"]),
+      result: maybe_result(elems),
+      white_elo: game_info["WhiteElo"],
+      black_elo: game_info["BlackElo"]
     }
 
     case persist_game(game_params) do
@@ -134,12 +138,28 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
   end
 
   defp maybe_year(date_string) when is_binary(date_string) do
-    case Regex.named_captures(~r/(?<date>\d{4})/, date_string) do
-      %{"date" => date} -> String.to_integer(date)
+    case Regex.named_captures(@date_regex, date_string) do
+      %{"year" => year} -> String.to_integer(year)
       _ -> nil
     end
   end
   defp maybe_year(_date_string), do: nil
+
+  defp maybe_month(date_string) when is_binary(date_string) do
+    case Regex.named_captures(@date_regex, date_string) do
+      %{"month" => month} -> String.to_integer(month)
+      _ -> nil
+    end
+  end
+  defp maybe_month(_date_string), do: nil
+
+  defp maybe_day(date_string) when is_binary(date_string) do
+    case Regex.named_captures(@date_regex, date_string) do
+      %{"day" => day} -> String.to_integer(day)
+      _ -> nil
+    end
+  end
+  defp maybe_day(_date_string), do: nil
 
   defp maybe_result(elems) do
     elem =

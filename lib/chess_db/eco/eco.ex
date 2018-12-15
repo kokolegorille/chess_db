@@ -62,25 +62,29 @@ defmodule ChessDb.Eco do
       |> String.trim_trailing("*\n")
       |> String.trim(" ")
 
-      zobrist_hash = if pgn == "" do
+      # Set fen and zobrist_hash
+      {fen, zobrist_hash} = if pgn == "" do
         fen = Common.initial_position()
         |> Chessfold.position_to_string
 
-        Zobrist.fen_to_zobrist_hash(fen)
+        {fen, Zobrist.fen_to_zobrist_hash(fen)}
       else
         case ChessParser.load_string("[FakeKey: \"Fake Header\"]" <> pgn) do
           {:ok, trees} ->
             [{:tree, _tags, elems} | _rest] = trees
 
-            elems
+            last_position = elems
             |> extract_moves()
             |> play_moves()
             |> List.last
-            |> Chessfold.position_to_string()
-            |> Zobrist.fen_to_zobrist_hash()
+
+            fen = Chessfold.position_to_string(last_position)
+            {fen, Zobrist.fen_to_zobrist_hash(fen)}
 
           {:error, _reason} ->
-            0
+            fen = Common.initial_position()
+            |> Chessfold.position_to_string
+            {fen, 0}
         end
       end
 
@@ -88,6 +92,7 @@ defmodule ChessDb.Eco do
         code: code,
         description: description,
         pgn: pgn,
+        fen: fen,
         zobrist_hash: zobrist_hash
       }
     end)

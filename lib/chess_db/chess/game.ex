@@ -16,6 +16,10 @@ defmodule ChessDb.Chess.Game do
     field :round, :string
     field :result, :string
     field :year, :integer
+    field :month, :integer
+    field :day, :integer
+    field :white_elo, :integer
+    field :black_elo, :integer
 
     belongs_to :black_player, Player, foreign_key: :black_id
     belongs_to :white_player, Player, foreign_key: :white_id
@@ -24,7 +28,7 @@ defmodule ChessDb.Chess.Game do
     timestamps()
   end
 
-  @optional_fields ~w(black_id white_id event site round result year)a
+  @optional_fields ~w(black_id white_id event site round result year month day white_elo black_elo)a
   @required_fields ~w(game_info pgn)a
 
   def changeset(%Game{} = game, attrs) do

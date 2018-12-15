@@ -14,10 +14,16 @@ defmodule ChessDb.Repo.Migrations.CreateGames do
       add :round, :string
       add :result, :string
       add :year, :integer
+      add :month, :integer
+      add :day, :integer
+
+      add :white_elo, :integer
+      add :black_elo, :integer
 
       timestamps()
     end
 
     create unique_index(:games, [:game_hash])
+    create index(:games, [:year, :month, :day])
   end
 end

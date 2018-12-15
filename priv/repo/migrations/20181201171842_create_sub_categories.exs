@@ -8,6 +8,7 @@ defmodule ChessDb.Repo.Migrations.CreateSubCategories do
       add :code, :string
       add :description, :string
       add :pgn, :string
+      add :fen, :string
       add :zobrist_hash, :bigint, null: false
 
       timestamps()

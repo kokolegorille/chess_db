@@ -94,7 +94,7 @@ defmodule ChessDb.Chess do
     args
     |> Enum.reduce(Game, fn
       {:order, order}, query ->
-        order_by(query, [{^order, :year}, :event, :round])
+        order_by(query, [{^order, :year}, {^order, :month}, {^order, :day}, :event, :round])
       {:filter, filter}, query ->
         filter_game_with(query, filter)
       arg, query ->
@@ -119,7 +119,7 @@ defmodule ChessDb.Chess do
       {:result, result}, query ->
         from q in query, where: q.result == ^result
       {:year, year}, query ->
-        from q in query, where: q.year == ^year
+        from q in query, where: q.year >= ^year
       {:white_player, name}, query ->
         from q in query,
           join: p in Player,
@@ -131,17 +131,18 @@ defmodule ChessDb.Chess do
           on: [id: q.black_id],
           where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%")
       {:player, name}, query ->
-        # For a player with withe or black
+        # For a player with white or black
         from q in query,
           join: p in Player,
           on: p.id == q.white_id or p.id == q.black_id,
           where: ilike(p.last_name, ^"%#{name}%") or ilike(p.first_name, ^"%#{name}%"),
           distinct: true
-      {:zobrist_hash, zobrist_hash}, query ->
+      {:zobrist_hashes, zobrist_hashes}, query ->
+        zobrist_hashes |> Enum.map(& sanitize_zobrist(&1))
         from q in query,
           join: p in Position,
           on: [game_id: q.id],
-          where: p.zobrist_hash == ^sanitize_zobrist(zobrist_hash),
+          where: p.zobrist_hash in ^zobrist_hashes,
           distinct: true
       arg, query ->
         Logger.info("args is not matched in filter #{inspect arg}")

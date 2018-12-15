@@ -13,6 +13,7 @@ defmodule ChessDb.Eco.SubCategory do
     field :code, :string
     field :description, :string
     field :pgn, :string
+    field :fen, :string
     field :zobrist_hash, :integer
 
     belongs_to :category, Category
@@ -20,7 +21,7 @@ defmodule ChessDb.Eco.SubCategory do
     timestamps()
   end
 
-  @required_fields ~w(category_id position code description pgn zobrist_hash)a
+  @required_fields ~w(category_id position code description pgn fen zobrist_hash)a
 
   def changeset(%SubCategory{} = sub_category, attrs) do
     sub_category
