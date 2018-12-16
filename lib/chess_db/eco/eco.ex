@@ -238,6 +238,7 @@ defmodule ChessDb.Eco do
 
   def delete_category(%Category{} = category), do: Repo.delete(category)
 
+  @spec change_category(ChessDb.Eco.Category.t()) :: Ecto.Changeset.t()
   def change_category(%Category{} = category) do
     Category.changeset(category, %{})
   end
@@ -253,8 +254,12 @@ defmodule ChessDb.Eco do
         from q in query,
           where: ilike(q.description, ^"%#{description}%")
       {:zobrist_hash, zobrist_hash}, query ->
-        from q in query,
-          where: q.zobrist_hash == ^sanitize_zobrist(zobrist_hash)
+        case zobrist_hash do
+          "" ->
+            query
+          zobrist_hash ->
+            from q in query, where: q.zobrist_hash == ^sanitize_zobrist(zobrist_hash)
+        end
       {:code, code}, query ->
         case Regex.named_captures(category_code_regex(), code) do
           %{"volume" => volume, "category_code" => category_code, "sub_category_code" => sub_category_code} ->
