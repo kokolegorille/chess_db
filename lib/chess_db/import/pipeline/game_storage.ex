@@ -148,6 +148,8 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   defp maybe_month(date_string) when is_binary(date_string) do
     case Regex.named_captures(@date_regex, date_string) do
+      %{"month" => "??"} -> nil
+      %{"month" => "?"} -> nil
       %{"month" => month} -> String.to_integer(month)
       _ -> nil
     end
@@ -156,6 +158,8 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
 
   defp maybe_day(date_string) when is_binary(date_string) do
     case Regex.named_captures(@date_regex, date_string) do
+      %{"day" => "??"} -> nil
+      %{"day" => "?"} -> nil
       %{"day" => day} -> String.to_integer(day)
       _ -> nil
     end
