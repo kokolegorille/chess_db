@@ -15,7 +15,8 @@ defmodule ChessDb.Import.Pipeline.GameStorage do
   alias ChessDb.{Chess, Repo, Zobrist}
 
   @dummy_state []
-  @date_regex ~r/(?<year>\d{4})[\.\/](?<month>\d{2})[\.\/](?<day>\d{2})/
+  @date_regex ~r/(?<year>\d{4})[\.\/](?<month>[\d\?]{1,2})[\.\/](?<day>[\d\?]{1,2})/
+
   def start_link([name, subscription_options]) do
     GenStage.start_link(__MODULE__, subscription_options, name: name)
   end
